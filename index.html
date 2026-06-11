@@ -39,7 +39,7 @@ input:focus,select:focus{outline:none;border-color:var(--green);background:#fff}
 label.fl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:14px 0 6px}
 .muted{color:var(--muted);font-size:13px}
 .banner{background:#fdf3dd;border:2px dashed #e3c47e;color:#8a6203;border-radius:14px;padding:10px 14px;font-size:13.5px;margin-bottom:14px;line-height:1.5}
-/* home subject cards */
+/* การ์ดช่องครู / วิชา */
 .subj-card{display:flex;align-items:center;gap:14px;cursor:pointer;transition:transform .12s}
 .subj-card:active{transform:scale(.98)}
 .subj-card:hover{border-color:#d8b894}
@@ -48,6 +48,7 @@ label.fl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:
 .subj-info h3{font-size:16px;margin-bottom:3px}
 .subj-rooms{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .tag{background:var(--sage-light);color:#5e6e44;border:1px solid #d6dcbc;border-radius:99px;padding:2px 9px;font-size:11.5px;font-weight:600}
+.tag.brown{background:var(--green-light);color:var(--green-dark);border-color:#ecdec4}
 /* room checkbox grid */
 .room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px;margin-top:8px}
 .room-cb{position:relative}
@@ -106,6 +107,8 @@ table.stat td.nm{text-align:left;max-width:160px;overflow:hidden;text-overflow:e
 @keyframes sp{to{transform:rotate(360deg)}}
 .empty{text-align:center;padding:36px 12px;color:var(--muted);font-size:14px}
 .empty .big{font-size:40px;margin-bottom:10px}
+.crumb{font-size:13px;color:var(--muted);margin-bottom:10px}
+.crumb a{color:var(--green-dark);cursor:pointer;text-decoration:underline}
 @media(max-width:480px){
   .stu-name{font-size:13px}
   .st-btn{width:31px;height:31px}
@@ -118,32 +121,49 @@ table.stat td.nm{text-align:left;max-width:160px;overflow:hidden;text-overflow:e
 <header>
   <div style="font-size:26px">🐻</div>
   <h1 id="header-title">เช็คชื่อรายวิชา <span class="sub" id="header-sub">ม.1–ม.6 · ปีการศึกษา 2569</span></h1>
-  <button class="hbtn" id="btn-home" style="display:none" onclick="goHome()">🏠 หน้าหลัก</button>
+  <button class="hbtn" id="btn-back" style="display:none" onclick="goBack()">‹ กลับ</button>
 </header>
 
 <main>
 
-<!-- ============ หน้าหลัก: รายการวิชา ============ -->
+<!-- ============ หน้าหลัก: ช่องครู ============ -->
 <div id="view-home">
   <div id="setup-banner" class="banner" style="display:none">
     ⚠️ ยังไม่ได้ตั้งค่า <b>SCRIPT_URL</b> — ตอนนี้ข้อมูลจะถูกเก็บในเครื่องนี้เท่านั้น (โหมดทดลอง) ดูวิธีเชื่อม Google Sheets ในไฟล์ "วิธีติดตั้ง.md"
   </div>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <h2 style="font-size:17px">วิชาทั้งหมด</h2>
-    <button class="btn btn-green btn-sm" onclick="openCreateModal()">＋ สร้างวิชาใหม่</button>
+    <h2 style="font-size:17px">🏡 ช่องของครูแต่ละคน</h2>
+    <button class="btn btn-green btn-sm" onclick="openTeacherModal(false)">＋ สร้างช่องครู</button>
   </div>
-  <div id="subject-list"><div class="empty"><span class="spin dark"></span> กำลังโหลด...</div></div>
+  <div id="teacher-list"><div class="empty"><span class="spin dark"></span> กำลังโหลด...</div></div>
+</div>
+
+<!-- ============ หน้าช่องครู: รายการวิชา ============ -->
+<div id="view-teacher" style="display:none">
+  <div class="card" style="display:flex;align-items:center;gap:12px;padding:13px 16px">
+    <div class="subj-icon">🧑‍🏫</div>
+    <div style="flex:1;min-width:0">
+      <h3 id="teacher-title" style="font-size:16px"></h3>
+      <div class="muted" id="teacher-sub"></div>
+    </div>
+    <button class="btn btn-gray btn-sm" onclick="openTeacherModal(true)">⚙️</button>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <h2 style="font-size:16px">📚 วิชาที่สอน</h2>
+    <button class="btn btn-green btn-sm" onclick="openSubjectModal(false)">＋ เพิ่มวิชา</button>
+  </div>
+  <div id="subject-list"></div>
 </div>
 
 <!-- ============ หน้าวิชา ============ -->
 <div id="view-subject" style="display:none">
   <div class="card" style="display:flex;align-items:center;gap:12px;padding:13px 16px">
-    <div class="subj-icon">🍯</div>
+    <div class="subj-icon">🌻</div>
     <div style="flex:1;min-width:0">
       <h3 id="subj-title" style="font-size:16px"></h3>
       <div class="muted" id="subj-teacher"></div>
     </div>
-    <button class="btn btn-gray btn-sm" onclick="openEditModal()">⚙️</button>
+    <button class="btn btn-gray btn-sm" onclick="openSubjectModal(true)">⚙️</button>
   </div>
 
   <div class="tabs">
@@ -203,27 +223,46 @@ table.stat td.nm{text-align:left;max-width:160px;overflow:hidden;text-overflow:e
 
 </main>
 
+<!-- ============ Modal: สร้าง/แก้ไขช่องครู ============ -->
+<div class="modal-bg" id="modal-teacher">
+  <div class="modal">
+    <h3 id="modal-t-title">สร้างช่องครูใหม่</h3>
+    <p class="muted" id="modal-t-desc">ช่องของครู 1 คน ใช้รหัสผ่านเดียวกับทุกวิชาในช่อง</p>
+    <label class="fl">ชื่อครู *</label>
+    <input type="text" id="ft-name" placeholder="เช่น ครูนิว">
+    <div id="ft-pass-wrap">
+      <label class="fl">ตั้งรหัสผ่านประจำช่อง * <span style="font-weight:400">(ใช้ตอนบันทึก/แก้ไขทุกวิชาของคุณ)</span></label>
+      <input type="password" id="ft-pass" placeholder="ตั้งรหัสผ่านของคุณเอง">
+    </div>
+    <div id="ft-edit-extra" style="display:none">
+      <label class="fl">เปลี่ยนรหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)</label>
+      <input type="password" id="ft-newpass" placeholder="รหัสผ่านใหม่">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-gray" onclick="closeModal('modal-teacher')">ยกเลิก</button>
+      <button class="btn btn-green" id="btn-t-submit" onclick="submitTeacher()">สร้างช่อง</button>
+    </div>
+    <div id="ft-delete-wrap" style="display:none;margin-top:14px;border-top:2px dashed var(--line);padding-top:14px">
+      <button class="btn btn-red btn-sm" onclick="deleteTeacherConfirm()">🗑️ ลบช่องครูนี้ (วิชาและข้อมูลเช็คชื่อทั้งหมดจะหายไป)</button>
+    </div>
+  </div>
+</div>
+
 <!-- ============ Modal: สร้าง/แก้ไขวิชา ============ -->
 <div class="modal-bg" id="modal-subject">
   <div class="modal">
-    <h3 id="modal-subj-title">สร้างวิชาใหม่</h3>
-    <p class="muted" id="modal-subj-desc">กรอกข้อมูลวิชาและเลือกห้องที่สอน</p>
+    <h3 id="modal-s-title">เพิ่มวิชาใหม่</h3>
+    <p class="muted" id="modal-s-desc"></p>
     <label class="fl">ชื่อวิชา *</label>
-    <input type="text" id="f-name" placeholder="เช่น คณิตศาสตร์พื้นฐาน ค21101">
-    <label class="fl">ชื่อครูผู้สอน *</label>
-    <input type="text" id="f-teacher" placeholder="เช่น ครูนิว">
-    <label class="fl" id="f-pass-label">ตั้งรหัสผ่านประจำวิชา * <span style="font-weight:400">(ใช้ตอนบันทึก/แก้ไข)</span></label>
-    <input type="password" id="f-pass" placeholder="ตั้งรหัสผ่านของคุณเอง">
+    <input type="text" id="fs-name" placeholder="เช่น คณิตศาสตร์พื้นฐาน ค21101">
     <label class="fl">ห้องที่สอน * (เลือกได้หลายห้อง)</label>
-    <div id="f-rooms"></div>
-    <div class="modal-actions" id="modal-subj-actions">
+    <div id="fs-rooms"></div>
+    <div class="modal-actions">
       <button class="btn btn-gray" onclick="closeModal('modal-subject')">ยกเลิก</button>
-      <button class="btn btn-green" id="btn-subj-submit" onclick="submitSubject()">สร้างวิชา</button>
+      <button class="btn btn-green" id="btn-s-submit" onclick="submitSubject()">เพิ่มวิชา</button>
     </div>
-    <div id="edit-extra" style="display:none;margin-top:14px;border-top:1px solid var(--line);padding-top:14px">
-      <label class="fl" style="margin-top:0">เปลี่ยนรหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)</label>
-      <input type="password" id="f-newpass" placeholder="รหัสผ่านใหม่">
-      <button class="btn btn-red btn-sm" style="margin-top:14px" onclick="deleteSubjectConfirm()">🗑️ ลบวิชานี้ (ข้อมูลเช็คชื่อจะหายทั้งหมด)</button>
+    <div id="fs-delete-wrap" style="display:none;margin-top:14px;border-top:2px dashed var(--line);padding-top:14px">
+      <button class="btn btn-red btn-sm" onclick="deleteSubjectConfirm()">🗑️ ลบวิชานี้ (ข้อมูลเช็คชื่อจะหายทั้งหมด)</button>
     </div>
   </div>
 </div>
@@ -231,14 +270,14 @@ table.stat td.nm{text-align:left;max-width:160px;overflow:hidden;text-overflow:e
 <!-- ============ Modal: ถามรหัสผ่าน ============ -->
 <div class="modal-bg" id="modal-pass">
   <div class="modal" style="max-width:360px">
-    <h3>🔒 ใส่รหัสผ่านประจำวิชา</h3>
+    <h3>🔒 ใส่รหัสผ่านประจำช่องครู</h3>
     <p class="muted" id="pass-desc"></p>
     <input type="password" id="pass-input" placeholder="รหัสผ่าน" style="margin-top:12px" onkeydown="if(event.key==='Enter')confirmPass()">
     <label style="display:flex;align-items:center;gap:7px;margin-top:10px;font-size:13.5px;color:var(--muted);cursor:pointer">
       <input type="checkbox" id="pass-remember" checked style="width:16px;height:16px"> จำรหัสผ่านในเครื่องนี้
     </label>
     <div class="modal-actions">
-      <button class="btn btn-gray" onclick="closeModal('modal-pass');passResolve&&passResolve(null)">ยกเลิก</button>
+      <button class="btn btn-gray" onclick="cancelPass()">ยกเลิก</button>
       <button class="btn btn-green" onclick="confirmPass()">ตกลง</button>
     </div>
   </div>
@@ -263,11 +302,13 @@ const ST = {
 };
 const THAI_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 
-let subjects = [];
+let teachers = [];       // [{id,name,created}]
+let subjects = [];       // [{id,teacherId,name,rooms,created}]
+let curTeacher = null;   // ช่องครูปัจจุบัน
 let cur = null;          // วิชาปัจจุบัน
 let curRoom = null;      // ห้องปัจจุบัน เช่น '1_1'
 let records = {};        // records[room][date] = {no: status}
-let draft = {};          // เช็คชื่อที่ยังไม่บันทึก (ของวันที่เลือก)
+let draft = {};          // เช็คชื่อที่ยังไม่บันทึก
 let editMode = false;
 let passResolve = null;
 
@@ -278,9 +319,10 @@ function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.get
 function thaiDate(iso){ if(!iso) return ''; const p=iso.split('-'); if(p.length<3) return iso; return parseInt(p[2])+' '+THAI_MONTHS[parseInt(p[1])-1]+' '+(parseInt(p[0])+543); }
 function roomLabel(key){ return ROOMS_DATA[key] ? ROOMS_DATA[key].label : key; }
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function subjectsOf(tid){ return subjects.filter(s=>s.teacherId===tid); }
 
 // ---------- API (Google Apps Script ผ่าน GET / fallback localStorage) ----------
-const LOCAL_MODE = !SCRIPT_URL;
+const LOCAL_MODE = !SCRIPT_URL || SCRIPT_URL.indexOf('__') === 0;
 
 async function api(params){
   if (LOCAL_MODE) return localApi(params);
@@ -292,106 +334,211 @@ async function api(params){
 
 // โหมดทดลอง: เก็บใน localStorage เครื่องเดียว
 function localApi(p){
-  const get = (k,d)=>JSON.parse(localStorage.getItem(k)||d);
-  const set = (k,v)=>localStorage.setItem(k,JSON.stringify(v));
-  let subs = get('cls_subjects','[]');
-  const findS = id => subs.find(s=>s.id===id);
+  const get=(k,d)=>JSON.parse(localStorage.getItem(k)||d);
+  const set=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  let ts=get('cls2_teachers','[]'), ss=get('cls2_subjects','[]');
+  const findT=id=>ts.find(t=>t.id===id), findS=id=>ss.find(s=>s.id===id);
+  const tpassOk=(tid,pw)=>{ const t=findT(tid); return t&&t.password===pw; };
   switch(p.action){
-    case 'listSubjects': return {ok:true, subjects:subs.map(s=>({id:s.id,name:s.name,teacher:s.teacher,rooms:s.rooms.split(','),created:s.created}))};
-    case 'createSubject': {
-      const id='S'+Date.now();
-      subs.push({id,name:p.name,teacher:p.teacher,rooms:p.rooms,password:p.password,created:todayStr()});
-      set('cls_subjects',subs); return {ok:true,id};
-    }
-    case 'checkPass': { const s=findS(p.id); return s&&s.password===p.password ? {ok:true} : {ok:false,error:'รหัสผ่านไม่ถูกต้อง'}; }
-    case 'editSubject': {
-      const s=findS(p.id); if(!s) return {ok:false,error:'ไม่พบวิชา'};
-      if(s.password!==p.password) return {ok:false,error:'รหัสผ่านไม่ถูกต้อง'};
-      if(p.name)s.name=p.name; if(p.teacher)s.teacher=p.teacher; if(p.rooms)s.rooms=p.rooms; if(p.newPassword)s.password=p.newPassword;
-      set('cls_subjects',subs); return {ok:true};
-    }
-    case 'deleteSubject': {
-      const s=findS(p.id); if(!s) return {ok:false,error:'ไม่พบวิชา'};
-      if(s.password!==p.password) return {ok:false,error:'รหัสผ่านไม่ถูกต้อง'};
-      subs=subs.filter(x=>x.id!==p.id); set('cls_subjects',subs);
-      localStorage.removeItem('cls_att_'+p.id); return {ok:true};
-    }
-    case 'save': {
-      const s=findS(p.id); if(!s) return {ok:false,error:'ไม่พบวิชา'};
-      if(s.password!==p.password) return {ok:false,error:'รหัสผ่านไม่ถูกต้อง'};
-      const recs=get('cls_att_'+p.id,'[]');
-      const i=recs.findIndex(r=>r.date===p.date&&r.room===p.room);
+    case 'listAll': return {ok:true,
+      teachers:ts.map(t=>({id:t.id,name:t.name,created:t.created})),
+      subjects:ss.map(s=>({id:s.id,teacherId:s.teacherId,name:s.name,rooms:s.rooms.split(','),created:s.created}))};
+    case 'createTeacher': { const id='T'+Date.now()+Math.floor(Math.random()*1000); ts.push({id,name:p.name,password:p.password,created:todayStr()}); set('cls2_teachers',ts); return {ok:true,id}; }
+    case 'checkPass': return tpassOk(p.teacherId,p.password)?{ok:true}:{ok:false,error:'รหัสผ่านไม่ถูกต้อง'};
+    case 'editTeacher': { const t=findT(p.id); if(!t)return{ok:false,error:'ไม่พบช่องครู'}; if(t.password!==p.password)return{ok:false,error:'รหัสผ่านไม่ถูกต้อง'};
+      if(p.name)t.name=p.name; if(p.newPassword)t.password=p.newPassword; set('cls2_teachers',ts); return {ok:true}; }
+    case 'deleteTeacher': { const t=findT(p.id); if(!t)return{ok:false,error:'ไม่พบช่องครู'}; if(t.password!==p.password)return{ok:false,error:'รหัสผ่านไม่ถูกต้อง'};
+      ss.filter(s=>s.teacherId===p.id).forEach(s=>localStorage.removeItem('cls2_att_'+s.id));
+      ss=ss.filter(s=>s.teacherId!==p.id); ts=ts.filter(x=>x.id!==p.id);
+      set('cls2_teachers',ts); set('cls2_subjects',ss); return {ok:true}; }
+    case 'createSubject': { if(!tpassOk(p.teacherId,p.password))return{ok:false,error:'รหัสผ่านไม่ถูกต้อง'};
+      const id='S'+Date.now()+Math.floor(Math.random()*1000); ss.push({id,teacherId:p.teacherId,name:p.name,rooms:p.rooms,created:todayStr()}); set('cls2_subjects',ss); return {ok:true,id}; }
+    case 'editSubject': { const s=findS(p.id); if(!s)return{ok:false,error:'ไม่พบวิชา'}; if(!tpassOk(s.teacherId,p.password))return{ok:false,error:'รหัสผ่านไม่ถูกต้อง'};
+      if(p.name)s.name=p.name; if(p.rooms)s.rooms=p.rooms; set('cls2_subjects',ss); return {ok:true}; }
+    case 'deleteSubject': { const s=findS(p.id); if(!s)return{ok:false,error:'ไม่พบวิชา'}; if(!tpassOk(s.teacherId,p.password))return{ok:false,error:'รหัสผ่านไม่ถูกต้อง'};
+      ss=ss.filter(x=>x.id!==p.id); set('cls2_subjects',ss); localStorage.removeItem('cls2_att_'+p.id); return {ok:true}; }
+    case 'save': { const s=findS(p.id); if(!s)return{ok:false,error:'ไม่พบวิชา'}; if(!tpassOk(s.teacherId,p.password))return{ok:false,error:'รหัสผ่านไม่ถูกต้อง'};
+      const recs=get('cls2_att_'+p.id,'[]'); const i=recs.findIndex(r=>r.date===p.date&&r.room===p.room);
       const rec={date:p.date,room:p.room,data:JSON.parse(p.data)};
-      if(i>=0)recs[i]=rec; else recs.push(rec);
-      set('cls_att_'+p.id,recs); return {ok:true};
-    }
-    case 'getAll': return {ok:true, records:get('cls_att_'+p.id,'[]')};
+      if(i>=0)recs[i]=rec; else recs.push(rec); set('cls2_att_'+p.id,recs); return {ok:true}; }
+    case 'getAll': return {ok:true, records:get('cls2_att_'+p.id,'[]')};
   }
   return {ok:false,error:'unknown'};
 }
 
-// ---------- รหัสผ่าน ----------
-function savedPass(id){ return localStorage.getItem('cls_pass_'+id) || null; }
-function askPass(desc){
+// ---------- รหัสผ่าน (ต่อช่องครู) ----------
+function savedPass(tid){ return localStorage.getItem('cls_tpass_'+tid) || null; }
+function askPass(){
   return new Promise(resolve=>{
     passResolve = resolve;
-    $('pass-desc').textContent = desc || (cur ? cur.name + ' (' + cur.teacher + ')' : '');
+    $('pass-desc').textContent = curTeacher ? 'ช่องของ '+curTeacher.name : '';
     $('pass-input').value = '';
     openModal('modal-pass');
     setTimeout(()=>$('pass-input').focus(), 100);
   });
 }
+function cancelPass(){ closeModal('modal-pass'); if(passResolve){passResolve(null); passResolve=null;} }
 function confirmPass(){
   const v = $('pass-input').value;
   if(!v){ toast('กรุณาใส่รหัสผ่าน'); return; }
   closeModal('modal-pass');
   if(passResolve){ passResolve({pass:v, remember:$('pass-remember').checked}); passResolve=null; }
 }
-// คืนรหัสผ่านที่ใช้ได้ (จาก cache หรือถามใหม่) — verify=true จะเช็คกับ server ก่อน
 async function getPass(){
-  const cached = savedPass(cur.id);
+  const cached = savedPass(curTeacher.id);
   if (cached) return cached;
   const r = await askPass();
   if (!r) return null;
-  if (r.remember) localStorage.setItem('cls_pass_'+cur.id, r.pass);
+  if (r.remember) localStorage.setItem('cls_tpass_'+curTeacher.id, r.pass);
   return r.pass;
 }
-function forgetPass(){ if(cur) localStorage.removeItem('cls_pass_'+cur.id); }
+function forgetPass(){ if(curTeacher) localStorage.removeItem('cls_tpass_'+curTeacher.id); }
 
 // ---------- modal ----------
 function openModal(id){ $(id).classList.add('show'); }
 function closeModal(id){ $(id).classList.remove('show'); }
 
-// ---------- หน้าหลัก ----------
-async function loadSubjects(){
+// ---------- navigation ----------
+function goBack(){
+  if ($('view-subject').style.display !== 'none') { openTeacherView(); }
+  else { goHome(); }
+}
+function goHome(){
+  $('view-subject').style.display='none';
+  $('view-teacher').style.display='none';
+  $('view-home').style.display='block';
+  $('btn-back').style.display='none';
+  curTeacher=null; cur=null;
+  renderTeachers();
+  window.scrollTo(0,0);
+}
+
+// ---------- หน้าหลัก: ช่องครู ----------
+async function loadAll(){
   if (LOCAL_MODE) $('setup-banner').style.display = 'block';
   try{
-    const r = await api({action:'listSubjects'});
+    const r = await api({action:'listAll'});
     if(!r.ok) throw new Error(r.error);
+    teachers = r.teachers || [];
     subjects = r.subjects || [];
-    renderHome();
+    renderTeachers();
   }catch(err){
-    $('subject-list').innerHTML = '<div class="empty"><div class="big">⚠️</div>โหลดข้อมูลไม่สำเร็จ<br><span class="muted">'+esc(err.message)+'</span><br><br><button class="btn btn-outline btn-sm" onclick="loadSubjects()">ลองใหม่</button></div>';
+    $('teacher-list').innerHTML = '<div class="empty"><div class="big">⚠️</div>โหลดข้อมูลไม่สำเร็จ<br><span class="muted">'+esc(err.message)+'</span><br><br><button class="btn btn-outline btn-sm" onclick="loadAll()">ลองใหม่</button></div>';
   }
 }
-function renderHome(){
-  const el = $('subject-list');
-  if(!subjects.length){
-    el.innerHTML = '<div class="empty"><div class="big">📚</div>ยังไม่มีวิชา<br>กด "สร้างวิชาใหม่" เพื่อเริ่มต้น</div>';
+function renderTeachers(){
+  const el = $('teacher-list');
+  if(!teachers.length){
+    el.innerHTML = '<div class="empty"><div class="big">🏡</div>ยังไม่มีช่องครู<br>กด "สร้างช่องครู" เพื่อเริ่มต้น</div>';
     return;
   }
-  el.innerHTML = subjects.map((s,i)=>
-    '<div class="card subj-card" onclick="openSubject('+i+')">'+
+  el.innerHTML = teachers.map((t,i)=>{
+    const subs = subjectsOf(t.id);
+    return '<div class="card subj-card" onclick="openTeacher('+i+')">'+
+      '<div class="subj-icon">🧑‍🏫</div>'+
+      '<div class="subj-info"><h3>'+esc(t.name)+'</h3>'+
+      '<div class="muted">'+(subs.length? subs.length+' วิชา' : 'ยังไม่มีวิชา')+'</div>'+
+      '<div class="subj-rooms">'+subs.slice(0,4).map(s=>'<span class="tag brown">'+esc(s.name)+'</span>').join('')+(subs.length>4?'<span class="tag brown">+'+(subs.length-4)+'</span>':'')+'</div></div>'+
+      '<div style="color:var(--muted);font-size:18px">›</div>'+
+    '</div>';
+  }).join('');
+}
+
+// ---------- หน้าช่องครู ----------
+function openTeacher(i){
+  curTeacher = teachers[i];
+  openTeacherView();
+}
+function openTeacherView(){
+  $('view-home').style.display='none';
+  $('view-subject').style.display='none';
+  $('view-teacher').style.display='block';
+  $('btn-back').style.display='';
+  cur=null;
+  $('teacher-title').textContent = curTeacher.name;
+  const subs = subjectsOf(curTeacher.id);
+  $('teacher-sub').textContent = subs.length ? 'มี '+subs.length+' วิชาในช่องนี้' : 'ยังไม่มีวิชา — กด "เพิ่มวิชา" ได้เลย';
+  renderSubjects();
+  window.scrollTo(0,0);
+}
+function renderSubjects(){
+  const subs = subjectsOf(curTeacher.id);
+  const el = $('subject-list');
+  if(!subs.length){
+    el.innerHTML = '<div class="empty"><div class="big">🌱</div>ยังไม่มีวิชาในช่องนี้</div>';
+    return;
+  }
+  el.innerHTML = subs.map(s=>
+    '<div class="card subj-card" onclick="openSubject(\''+s.id+'\')">'+
       '<div class="subj-icon">🌻</div>'+
       '<div class="subj-info"><h3>'+esc(s.name)+'</h3>'+
-      '<div class="muted">👩‍🏫 '+esc(s.teacher)+'</div>'+
       '<div class="subj-rooms">'+s.rooms.map(r=>'<span class="tag">'+roomLabel(r)+'</span>').join('')+'</div></div>'+
       '<div style="color:var(--muted);font-size:18px">›</div>'+
     '</div>'
   ).join('');
 }
 
-// ---------- สร้าง/แก้ไขวิชา ----------
+// ---------- Modal ช่องครู ----------
+function openTeacherModal(edit){
+  editMode = edit;
+  $('modal-t-title').textContent = edit ? 'แก้ไขช่องครู' : 'สร้างช่องครูใหม่';
+  $('modal-t-desc').textContent = edit ? 'ต้องใช้รหัสผ่านประจำช่องเพื่อบันทึก' : 'ช่องของครู 1 คน ใช้รหัสผ่านเดียวกับทุกวิชาในช่อง';
+  $('btn-t-submit').textContent = edit ? 'บันทึกการแก้ไข' : 'สร้างช่อง';
+  $('ft-name').value = edit ? curTeacher.name : '';
+  $('ft-pass').value = '';
+  $('ft-pass-wrap').style.display = edit ? 'none' : '';
+  $('ft-edit-extra').style.display = edit ? '' : 'none';
+  $('ft-delete-wrap').style.display = edit ? '' : 'none';
+  if(edit) $('ft-newpass').value='';
+  openModal('modal-teacher');
+}
+async function submitTeacher(){
+  const name = $('ft-name').value.trim();
+  if(!name){ toast('กรุณากรอกชื่อครู'); return; }
+  const btn=$('btn-t-submit'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> กำลังบันทึก...';
+  try{
+    if(!editMode){
+      const pass=$('ft-pass').value;
+      if(!pass){ toast('กรุณาตั้งรหัสผ่าน'); return; }
+      const r=await api({action:'createTeacher',name,password:pass});
+      if(!r.ok) throw new Error(r.error);
+      localStorage.setItem('cls_tpass_'+r.id, pass);
+      toast('✅ สร้างช่องของ "'+name+'" แล้ว');
+      closeModal('modal-teacher');
+      await loadAll();
+      const i = teachers.findIndex(t=>t.id===r.id);
+      if(i>=0) openTeacher(i);
+    }else{
+      const pass=await getPass(); if(pass===null) return;
+      const params={action:'editTeacher',id:curTeacher.id,password:pass,name};
+      const np=$('ft-newpass').value; if(np) params.newPassword=np;
+      const r=await api(params);
+      if(!r.ok){ if(/รหัสผ่าน/.test(r.error||'')) forgetPass(); throw new Error(r.error); }
+      if(np) localStorage.setItem('cls_tpass_'+curTeacher.id, np);
+      curTeacher.name=name;
+      toast('✅ บันทึกการแก้ไขแล้ว');
+      closeModal('modal-teacher');
+      openTeacherView();
+    }
+  }catch(err){ toast('❌ '+err.message,3500); }
+  finally{ btn.disabled=false; btn.innerHTML=editMode?'บันทึกการแก้ไข':'สร้างช่อง'; }
+}
+async function deleteTeacherConfirm(){
+  const n = subjectsOf(curTeacher.id).length;
+  if(!confirm('ลบช่องของ "'+curTeacher.name+'" ('+n+' วิชา) และข้อมูลเช็คชื่อทั้งหมด?\nการลบไม่สามารถย้อนกลับได้')) return;
+  const pass=await getPass(); if(pass===null) return;
+  try{
+    const r=await api({action:'deleteTeacher',id:curTeacher.id,password:pass});
+    if(!r.ok){ if(/รหัสผ่าน/.test(r.error||'')) forgetPass(); throw new Error(r.error); }
+    forgetPass();
+    toast('ลบช่องครูแล้ว');
+    closeModal('modal-teacher');
+    await loadAll();
+    goHome();
+  }catch(err){ toast('❌ '+err.message,3500); }
+}
+
+// ---------- Modal วิชา ----------
 function renderRoomPicker(checked){
   checked = checked || [];
   const levels = {};
@@ -399,7 +546,7 @@ function renderRoomPicker(checked){
     const lv = k.split('_')[0];
     (levels[lv] = levels[lv] || []).push(k);
   });
-  $('f-rooms').innerHTML = Object.keys(levels).sort((a,b)=>a-b).map(lv=>
+  $('fs-rooms').innerHTML = Object.keys(levels).sort((a,b)=>a-b).map(lv=>
     '<div class="level-row"><b>ม.'+lv+'</b> <button type="button" onclick="toggleLevel(\''+lv+'\')">เลือกทั้งระดับ</button></div>'+
     '<div class="room-grid">'+levels[lv].map(k=>
       '<label class="room-cb"><input type="checkbox" value="'+k+'" '+(checked.includes(k)?'checked':'')+'><span>'+roomLabel(k)+'</span></label>'
@@ -407,65 +554,48 @@ function renderRoomPicker(checked){
   ).join('');
 }
 function toggleLevel(lv){
-  const boxes = [...document.querySelectorAll('#f-rooms input[type=checkbox]')].filter(b=>b.value.split('_')[0]===lv);
+  const boxes = [...document.querySelectorAll('#fs-rooms input[type=checkbox]')].filter(b=>b.value.split('_')[0]===lv);
   const allOn = boxes.every(b=>b.checked);
   boxes.forEach(b=>b.checked = !allOn);
 }
-function openCreateModal(){
-  editMode = false;
-  $('modal-subj-title').textContent = 'สร้างวิชาใหม่';
-  $('modal-subj-desc').textContent = 'กรอกข้อมูลวิชาและเลือกห้องที่สอน';
-  $('btn-subj-submit').textContent = 'สร้างวิชา';
-  $('f-name').value=''; $('f-teacher').value=''; $('f-pass').value='';
-  $('f-pass-label').style.display=''; $('f-pass').style.display='';
-  $('edit-extra').style.display='none';
-  renderRoomPicker([]);
-  openModal('modal-subject');
-}
-function openEditModal(){
-  editMode = true;
-  $('modal-subj-title').textContent = 'แก้ไขวิชา';
-  $('modal-subj-desc').textContent = 'ต้องใช้รหัสผ่านประจำวิชาเพื่อบันทึกการแก้ไข';
-  $('btn-subj-submit').textContent = 'บันทึกการแก้ไข';
-  $('f-name').value=cur.name; $('f-teacher').value=cur.teacher;
-  $('f-pass-label').style.display='none'; $('f-pass').style.display='none';
-  $('edit-extra').style.display='block'; $('f-newpass').value='';
-  renderRoomPicker(cur.rooms);
-  openModal('modal-subject');
-}
 function pickedRooms(){
-  return [...document.querySelectorAll('#f-rooms input:checked')].map(b=>b.value);
+  return [...document.querySelectorAll('#fs-rooms input:checked')].map(b=>b.value);
+}
+function openSubjectModal(edit){
+  editMode = edit;
+  $('modal-s-title').textContent = edit ? 'แก้ไขวิชา' : 'เพิ่มวิชาใหม่';
+  $('modal-s-desc').textContent = 'ในช่องของ '+curTeacher.name;
+  $('btn-s-submit').textContent = edit ? 'บันทึกการแก้ไข' : 'เพิ่มวิชา';
+  $('fs-name').value = edit ? cur.name : '';
+  $('fs-delete-wrap').style.display = edit ? '' : 'none';
+  renderRoomPicker(edit ? cur.rooms : []);
+  openModal('modal-subject');
 }
 async function submitSubject(){
-  const name=$('f-name').value.trim(), teacher=$('f-teacher').value.trim(), rooms=pickedRooms();
-  if(!name||!teacher){ toast('กรุณากรอกชื่อวิชาและชื่อครู'); return; }
+  const name=$('fs-name').value.trim(), rooms=pickedRooms();
+  if(!name){ toast('กรุณากรอกชื่อวิชา'); return; }
   if(!rooms.length){ toast('กรุณาเลือกห้องอย่างน้อย 1 ห้อง'); return; }
-  const btn=$('btn-subj-submit'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> กำลังบันทึก...';
+  const pass=await getPass(); if(pass===null) return;
+  const btn=$('btn-s-submit'); btn.disabled=true; btn.innerHTML='<span class="spin"></span> กำลังบันทึก...';
   try{
     if(!editMode){
-      const pass=$('f-pass').value;
-      if(!pass){ toast('กรุณาตั้งรหัสผ่าน'); return; }
-      const r=await api({action:'createSubject',name,teacher,rooms:rooms.join(','),password:pass});
-      if(!r.ok) throw new Error(r.error);
-      localStorage.setItem('cls_pass_'+r.id, pass);
-      toast('✅ สร้างวิชา "'+name+'" เรียบร้อย');
-      closeModal('modal-subject');
-      await loadSubjects();
-    }else{
-      const pass=await getPass(); if(pass===null) return;
-      const params={action:'editSubject',id:cur.id,password:pass,name,teacher,rooms:rooms.join(',')};
-      const np=$('f-newpass').value; if(np) params.newPassword=np;
-      const r=await api(params);
+      const r=await api({action:'createSubject',teacherId:curTeacher.id,password:pass,name,rooms:rooms.join(',')});
       if(!r.ok){ if(/รหัสผ่าน/.test(r.error||'')) forgetPass(); throw new Error(r.error); }
-      if(np) localStorage.setItem('cls_pass_'+cur.id, np);
-      cur.name=name; cur.teacher=teacher; cur.rooms=rooms;
+      subjects.push({id:r.id,teacherId:curTeacher.id,name,rooms,created:todayStr()});
+      toast('✅ เพิ่มวิชา "'+name+'" แล้ว');
+      closeModal('modal-subject');
+      openTeacherView();
+    }else{
+      const r=await api({action:'editSubject',id:cur.id,password:pass,name,rooms:rooms.join(',')});
+      if(!r.ok){ if(/รหัสผ่าน/.test(r.error||'')) forgetPass(); throw new Error(r.error); }
+      cur.name=name; cur.rooms=rooms;
       if(!rooms.includes(curRoom)) curRoom=rooms[0];
       toast('✅ บันทึกการแก้ไขแล้ว');
       closeModal('modal-subject');
       openSubjectView();
     }
-  }catch(err){ toast('❌ '+err.message); }
-  finally{ btn.disabled=false; btn.innerHTML=editMode?'บันทึกการแก้ไข':'สร้างวิชา'; }
+  }catch(err){ toast('❌ '+err.message,3500); }
+  finally{ btn.disabled=false; btn.innerHTML=editMode?'บันทึกการแก้ไข':'เพิ่มวิชา'; }
 }
 async function deleteSubjectConfirm(){
   if(!confirm('ลบวิชา "'+cur.name+'" และข้อมูลเช็คชื่อทั้งหมด?\nการลบไม่สามารถย้อนกลับได้')) return;
@@ -473,20 +603,20 @@ async function deleteSubjectConfirm(){
   try{
     const r=await api({action:'deleteSubject',id:cur.id,password:pass});
     if(!r.ok){ if(/รหัสผ่าน/.test(r.error||'')) forgetPass(); throw new Error(r.error); }
-    forgetPass();
+    subjects = subjects.filter(s=>s.id!==cur.id);
     toast('ลบวิชาแล้ว');
     closeModal('modal-subject');
-    goHome(); loadSubjects();
-  }catch(err){ toast('❌ '+err.message); }
+    openTeacherView();
+  }catch(err){ toast('❌ '+err.message,3500); }
 }
 
 // ---------- หน้าวิชา ----------
-async function openSubject(i){
-  cur = subjects[i];
+async function openSubject(id){
+  cur = subjects.find(s=>s.id===id);
+  if(!cur) return;
   curRoom = cur.rooms[0];
   records = {}; draft = {};
   openSubjectView();
-  // โหลดข้อมูลเช็คชื่อทั้งหมดของวิชา
   try{
     const r = await api({action:'getAll', id:cur.id});
     if(r.ok){
@@ -500,20 +630,15 @@ async function openSubject(i){
 }
 function openSubjectView(){
   $('view-home').style.display='none';
+  $('view-teacher').style.display='none';
   $('view-subject').style.display='block';
-  $('btn-home').style.display='';
+  $('btn-back').style.display='';
   $('subj-title').textContent = cur.name;
-  $('subj-teacher').textContent = '👩‍🏫 '+cur.teacher;
+  $('subj-teacher').textContent = '🧑‍🏫 '+curTeacher.name;
   $('check-date').value = todayStr();
   renderRoomChips();
   switchTab('check');
   window.scrollTo(0,0);
-}
-function goHome(){
-  $('view-subject').style.display='none';
-  $('view-home').style.display='block';
-  $('btn-home').style.display='none';
-  cur=null;
 }
 function renderRoomChips(){
   $('room-chips').innerHTML = cur.rooms.map(r=>
@@ -558,7 +683,6 @@ function renderChecklist(){
 function setStatus(no, st){
   const day = currentDayData();
   draft[no] = (day[no]===st) ? '' : st;   // กดซ้ำ = ยกเลิก
-  // อัปเดตเฉพาะแถว
   const day2 = currentDayData();
   const rows = document.querySelectorAll('#checklist .stu-row');
   const idx = students().findIndex(s=>s.no===no);
@@ -588,7 +712,7 @@ function renderCounts(){
     '<div class="count-box cb-l"><b>'+c.l+'</b>สาย</div>'+
     '<div class="count-box cb-s"><b>'+c.s+'</b>ลา</div>'+
     '<div class="count-box cb-a"><b>'+c.a+'</b>ขาด</div>'+
-    '<div class="count-box" style="background:#eef1ef;color:var(--muted)"><b>'+un+'</b>ยังไม่เช็ค</div>';
+    '<div class="count-box" style="background:#f0e8d8;color:var(--muted)"><b>'+un+'</b>ยังไม่เช็ค</div>';
 }
 async function saveDay(){
   const d = $('check-date').value;
@@ -627,7 +751,7 @@ function renderHistoryTable(){
     students().map(s=>{
       const st = day[s.no];
       const lab = st ? ST[st].label : '—';
-      const col = st ? ST[st].color : '#999';
+      const col = st ? ST[st].color : '#a08a72';
       return '<tr><td>'+s.no+'</td><td class="nm">'+esc(s.name)+'</td><td style="color:'+col+';font-weight:700">'+lab+'</td></tr>';
     }).join('')+'</table>';
 }
@@ -685,7 +809,7 @@ function buildReportHtml(){
     '<div style="text-align:center;border-bottom:3px dashed #d8b894;padding-bottom:14px;margin-bottom:16px">'+
     '<div style="font-size:20px;font-weight:700;color:#7f5539">🌾 สถิติการเข้าเรียน</div>'+
     '<div style="font-size:16px;margin-top:4px">'+esc(cur.name)+' — '+roomLabel(curRoom)+'</div>'+
-    '<div style="font-size:13px;color:#a08a72;margin-top:3px">ครูผู้สอน: '+esc(cur.teacher)+' · เช็คชื่อแล้ว '+dates.length+' ครั้ง · ข้อมูล ณ วันที่ '+today+'</div>'+
+    '<div style="font-size:13px;color:#a08a72;margin-top:3px">ครูผู้สอน: '+esc(curTeacher.name)+' · เช็คชื่อแล้ว '+dates.length+' ครั้ง · ข้อมูล ณ วันที่ '+today+'</div>'+
     '</div>'+
     '<style>#report-box table{width:100%;border-collapse:collapse;font-size:13px}#report-box th,#report-box td{border:1px solid #e9dcc7;padding:6px;text-align:center}#report-box th{background:#f3e9d9;color:#7f5539}#report-box td.nm{text-align:left}#report-box .pct-good{color:#5e7a3e;font-weight:700}#report-box .pct-warn{color:#a87408;font-weight:700}#report-box .pct-bad{color:#c4604f;font-weight:700}</style>'+
     statsTableHtml(curRoom)+
@@ -702,7 +826,7 @@ async function exportImage(){
     wrap.style.cssText='position:fixed;left:-9999px;top:0';
     wrap.innerHTML=buildReportHtml();
     document.body.appendChild(wrap);
-    const canvas=await html2canvas(wrap.firstChild,{scale:2,backgroundColor:'#ffffff'});
+    const canvas=await html2canvas(wrap.firstChild,{scale:2,backgroundColor:'#fffcf5'});
     document.body.removeChild(wrap);
     const fname='สถิติ-'+cur.name.replace(/[\\/:*?"<>|\s]+/g,'-')+'-'+roomLabel(curRoom).replace('/','-')+'.png';
     canvas.toBlob(async blob=>{
@@ -732,7 +856,7 @@ async function exportExcel(allRooms){
       if(!dates.length) return;
       const header1=['เลขที่','เลขประจำตัว','ชื่อ - สกุล',...dates.map(thaiDate),'มา','สาย','ลา','ขาด','รวมครั้ง','% เข้าเรียน'];
       const aoa=[
-        ['สถิติการเข้าเรียน: '+cur.name+' — '+roomLabel(room)+' (ครู'+cur.teacher+') ปีการศึกษา 2569'],
+        ['สถิติการเข้าเรียน: '+cur.name+' — '+roomLabel(room)+' (ครูผู้สอน: '+curTeacher.name+') ปีการศึกษา 2569'],
         ['สัญลักษณ์: ✓ = มา, ส = สาย, ล = ลา, ข = ขาด'],
         [],
         header1
@@ -746,7 +870,6 @@ async function exportExcel(allRooms){
       });
       const ws=XLSX.utils.aoa_to_sheet(aoa);
       ws['!cols']=[{wch:6},{wch:11},{wch:28},...dates.map(()=>({wch:9})),{wch:5},{wch:5},{wch:5},{wch:5},{wch:8},{wch:11}];
-      // format % column
       const pctCol=3+dates.length+5;
       for(let i=0;i<rows.length;i++){
         const cell=ws[XLSX.utils.encode_cell({r:4+i,c:pctCol})];
@@ -761,7 +884,7 @@ async function exportExcel(allRooms){
 }
 
 // ---------- init ----------
-loadSubjects();
+loadAll();
 </script>
 </body>
 </html>
